@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import locationsHandler from '../api/locations';
-import { createSessionCookie } from '../lib/auth';
-import * as googleSheetsModule from '../lib/googleSheets';
+import { createSessionCookie } from '../api/_lib/auth.js';
+import * as googleSheetsModule from '../api/_lib/googleSheets.js';
 
 describe('Locations API Endpoint Tests', () => {
   const validCookie = createSessionCookie();

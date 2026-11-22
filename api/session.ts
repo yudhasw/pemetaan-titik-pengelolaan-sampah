@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyRequestSession } from '../lib/auth';
-import { ApiResponse } from '../lib/types';
+import { verifyRequestSession } from './_lib/auth.js';
+import { ApiResponse } from './_lib/types.js';
 
 export default async function handler(
   req: VercelRequest,

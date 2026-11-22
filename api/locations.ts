@@ -1,16 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyOrigin, verifyRequestSession } from '../lib/auth';
+import { verifyOrigin, verifyRequestSession } from './_lib/auth.js';
 import {
   createLocation,
   getAllLocations,
   softDeleteLocation,
   updateLocation,
-} from '../lib/googleSheets';
-import { ApiResponse } from '../lib/types';
+} from './_lib/googleSheets.js';
+import { ApiResponse } from './_lib/types.js';
 import {
   validateCreateLocation,
   validateUpdateLocation,
-} from '../lib/validation';
+} from './_lib/validation.js';
 
 export default async function handler(
   req: VercelRequest,
@@ -106,7 +106,6 @@ export default async function handler(
       }
 
       case 'DELETE': {
-        // ID can be passed in query or body
         const id = (req.query?.id as string) || body.id;
         if (!id || typeof id !== 'string' || id.trim() === '') {
           res.status(400).json({
