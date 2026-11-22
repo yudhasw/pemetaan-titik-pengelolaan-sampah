@@ -1,6 +1,6 @@
-# TrashMap — WebGIS Pendataan Tempat Sampah
+# Pemetaan Titik Pengelolaan Sampah — WebGIS
 
-TrashMap adalah aplikasi WebGIS responsif berbasis web yang dirancang khusus untuk petugas lapangan dalam mencatat, memetakan, memperbarui, dan mengelola titik lokasi tempat sampah secara interaktif dan real-time. Aplikasi ini memanfaatkan **Google Sheets** sebagai basis data persisten melalui **Google Sheets API v4**, peta interaktif **Leaflet** & **OpenStreetMap**, antarmuka modern **React & TypeScript**, serta **Vercel Serverless Functions** untuk backend yang aman dan efisien.
+PTPS adalah aplikasi WebGIS responsif berbasis web yang dirancang khusus untuk petugas lapangan dalam mencatat, memetakan, memperbarui, dan mengelola titik lokasi tempat sampah secara interaktif dan real-time. Aplikasi ini memanfaatkan **Google Sheets** sebagai basis data persisten melalui **Google Sheets API v4**, peta interaktif **Leaflet** & **OpenStreetMap**, antarmuka modern **React & TypeScript**, serta **Vercel Serverless Functions** untuk backend yang aman dan efisien.
 
 ---
 
@@ -27,7 +27,7 @@ TrashMap adalah aplikasi WebGIS responsif berbasis web yang dirancang khusus unt
 
 ## 1. Ringkasan Proyek
 
-TrashMap menjawab kebutuhan pendataan fasilitas sanitasi dan tempat sampah di lapangan tanpa memerlukan setup server database yang rumit atau biaya lisensi tinggi. Dengan antarmuka yang dioptimalkan untuk perangkat mobile maupun desktop, petugas dapat:
+PTPS menjawab kebutuhan pendataan fasilitas sanitasi dan tempat sampah di lapangan tanpa memerlukan setup server database yang rumit atau biaya lisensi tinggi. Dengan antarmuka yang dioptimalkan untuk perangkat mobile maupun desktop, petugas dapat:
 - Melihat seluruh titik tempat sampah yang telah terdaftar pada peta interaktif.
 - Membedakan kondisi tempat sampah secara visual berdasarkan warna penanda:
   - 🟢 **Hijau (Baik)**: Tempat sampah dalam kondisi layak dan daya tampung mencukupi.
@@ -220,7 +220,7 @@ Aplikasi ini dikonfigurasi khusus agar siap dideploy langsung ke **Vercel** seba
 2. **Impor Proyek di Vercel**:
    - Masuk ke dasbor [Vercel](https://vercel.com).
    - Klik **Add New...** > **Project**.
-   - Pilih repositori Git proyek TrashMap Anda.
+   - Pilih repositori Git proyek PTPS Anda.
    - Vercel akan otomatis mendeteksi Framework Preset sebagai **Vite**.
 
 3. **Atur Environment Variables di Vercel**:
@@ -311,9 +311,9 @@ Menggunakan Google Sheets sebagai basis data backend sangat praktis dan mudah di
    - Google Sheets API v4 menetapkan kuota bawaan sekitar **300 requests per menit per project** dan **60 requests per menit per user**.
    - Untuk penggunaan tim lapangan 5–20 petugas secara bersamaan, kuota ini sangat mencukupi. Namun tidak disarankan untuk aplikasi publik dengan ribuan pengguna konkuren.
 2. **Latensi Tulis (Write Latency)**:
-   - Menulis ke Google Sheets memerlukan waktu sekitar 300ms–800ms per panggilan API, relatif lebih lambat dibandingkan database transaksional (seperti PostgreSQL/Redis). Antarmuka TrashMap mengatasinya dengan status loading/indikator simpan yang jelas.
+   - Menulis ke Google Sheets memerlukan waktu sekitar 300ms–800ms per panggilan API, relatif lebih lambat dibandingkan database transaksional (seperti PostgreSQL/Redis). Antarmuka PTPS mengatasinya dengan status loading/indikator simpan yang jelas.
 3. **Ketahanan Konkurensi (Concurrency & Race Conditions)**:
-   - Google Sheets tidak memiliki fitur *row locking* transaksional native. TrashMap meminimalkan risiko ini dengan mencari baris berdasarkan UUID sebelum pembaruan serta memperbarui rentang sel spesifik (`B{row}:I{row}`).
+   - Google Sheets tidak memiliki fitur *row locking* transaksional native. PTPS meminimalkan risiko ini dengan mencari baris berdasarkan UUID sebelum pembaruan serta memperbarui rentang sel spesifik (`B{row}:I{row}`).
 4. **Batas Kapasitas Sel**:
    - Google Spreadsheet memiliki batas maksimal 10 juta sel per berkas. Dengan 10 kolom per baris, lembar kerja ini mampu menampung hingga 1 juta titik lokasi tempat sampah.
 
@@ -324,7 +324,7 @@ Menggunakan Google Sheets sebagai basis data backend sangat praktis dan mudah di
 ### 1. `GOOGLE_PRIVATE_KEY` Error / Pemformatan Baris Baru
 - **Gejala**: Error `error:0909006C:PEM routines:get_name:no start line` atau `PEM_read_bio_PrivateKey failed`.
 - **Penyebab**: Karakter newline `\n` pada kunci privat ter-escape atau terpotong saat disalin ke environment variable Vercel atau file `.env`.
-- **Solusi**: Di kode TrashMap (`lib/googleSheets.ts`), aplikasi secara otomatis menjalankan `privateKey.replace(/\\n/g, '\n')`. Pastikan saat mengisi di Vercel, salin seluruh string dari `-----BEGIN PRIVATE KEY-----` hingga `-----END PRIVATE KEY-----\n` termasuk tanda kutip ganda jika di file `.env`.
+- **Solusi**: Di kode PTPS (`lib/googleSheets.ts`), aplikasi secara otomatis menjalankan `privateKey.replace(/\\n/g, '\n')`. Pastikan saat mengisi di Vercel, salin seluruh string dari `-----BEGIN PRIVATE KEY-----` hingga `-----END PRIVATE KEY-----\n` termasuk tanda kutip ganda jika di file `.env`.
 
 ### 2. Error `The caller does not have permission` (403 Forbidden)
 - **Penyebab**: Service account belum diberi izin edit ke file spreadsheet.
@@ -340,4 +340,4 @@ Menggunakan Google Sheets sebagai basis data backend sangat praktis dan mudah di
 
 ---
 
-**TrashMap** — Dikembangkan dengan standar rekayasa perangkat lunak modern untuk mendukung kebersihan lingkungan dan efisiensi pengelolaan sampah wilayah.
+**PTPS** — Dikembangkan dengan standar rekayasa perangkat lunak modern untuk mendukung kebersihan lingkungan dan efisiensi pengelolaan sampah wilayah.

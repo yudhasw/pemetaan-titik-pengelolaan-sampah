@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
           </svg>
         </div>
         <div className="brand-text">
-          <h1 className="brand-title">Inisiatif Sampah</h1>
+          <h1 className="brand-title">Pemetaan Pengelolaan Sampah</h1>
           <span className="brand-subtitle">Kel. Tamansari, Bandung Wetan</span>
         </div>
         <div className="brand-badge" title="Total inisiatif terdata">
