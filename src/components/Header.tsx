@@ -4,23 +4,26 @@ interface HeaderProps {
   onAddClick: () => void;
   isAddingMode: boolean;
   onCancelAdd: () => void;
-  onLogout: () => void;
+  onOpenMenu: () => void;
   totalLocations: number;
   activeView: 'map' | 'list';
   onViewChange: (view: 'map' | 'list') => void;
+  hasActiveFilters?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onAddClick,
   isAddingMode,
   onCancelAdd,
-  onLogout,
+  onOpenMenu,
   totalLocations,
   activeView,
   onViewChange,
+  hasActiveFilters = false,
 }) => {
   return (
     <header className="app-header">
+      {/* Brand Logo & Title */}
       <div className="header-brand">
         <div className="brand-icon">
           <svg
@@ -39,27 +42,28 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="brand-text">
           <h1 className="brand-title">Inisiatif Sampah</h1>
-          <span className="brand-subtitle">Kel. Tamansari, Bandung Wetan</span>
+          <span className="brand-subtitle hide-on-mobile">Kel. Tamansari, Bandung Wetan</span>
         </div>
-        <div className="brand-badge" title="Total inisiatif terdata">
+        <div className="brand-badge hide-on-mobile" title="Total inisiatif terdata">
           {totalLocations}
         </div>
       </div>
 
-      {/* Segmented View Switcher: Peta vs Daftar */}
+      {/* Segmented View Switcher: Peta vs Daftar (Icon-only di Mobile, Lengkap di Desktop) */}
       <div className="view-toggle-group">
         <button
           type="button"
           className={`view-toggle-btn ${activeView === 'map' ? 'active' : ''}`}
           onClick={() => onViewChange('map')}
           title="Tampilan Peta Interaktif"
+          aria-label="Tampilan Peta"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
             <line x1="8" y1="2" x2="8" y2="18"></line>
             <line x1="16" y1="6" x2="16" y2="22"></line>
           </svg>
-          <span>Peta</span>
+          <span className="view-toggle-text hide-on-mobile">Peta</span>
         </button>
 
         <button
@@ -67,8 +71,9 @@ export const Header: React.FC<HeaderProps> = ({
           className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
           onClick={() => onViewChange('list')}
           title="Tampilan Daftar & Tabel Lokasi"
+          aria-label="Tampilan Daftar Lokasi"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="8" y1="6" x2="21" y2="6"></line>
             <line x1="8" y1="12" x2="21" y2="12"></line>
             <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -76,16 +81,19 @@ export const Header: React.FC<HeaderProps> = ({
             <line x1="3" y1="12" x2="3.01" y2="12"></line>
             <line x1="3" y1="18" x2="3.01" y2="18"></line>
           </svg>
-          <span>Daftar</span>
+          <span className="view-toggle-text hide-on-mobile">Daftar</span>
         </button>
       </div>
 
+      {/* Header Actions: Tombol Tambah (+) & Hamburger Menu (☰) */}
       <div className="header-actions">
         {isAddingMode ? (
           <button
             type="button"
-            className="btn btn-warning header-btn"
+            className="btn btn-warning header-btn btn-add-compact"
             onClick={onCancelAdd}
+            title="Batalkan penentuan titik"
+            aria-label="Batalkan"
           >
             <svg
               width="15"
@@ -98,13 +106,15 @@ export const Header: React.FC<HeaderProps> = ({
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-            <span>Batal</span>
+            <span className="hide-on-mobile">Batal</span>
           </button>
         ) : (
           <button
             type="button"
-            className="btn btn-primary header-btn"
+            className="btn btn-primary header-btn btn-add-compact"
             onClick={onAddClick}
+            title="Tambah Inisiatif Tempat Sampah Baru"
+            aria-label="Tambah Lokasi"
           >
             <svg
               width="15"
@@ -117,32 +127,38 @@ export const Header: React.FC<HeaderProps> = ({
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>Tambah</span>
+            <span className="hide-on-mobile">Tambah</span>
           </button>
         )}
 
+        {/* Hamburger Menu Icon (☰) */}
         <button
           type="button"
-          className="btn btn-outline header-btn-logout"
-          onClick={onLogout}
-          title="Keluar dari akun sistem"
-          aria-label="Keluar"
+          className="btn btn-outline header-btn-menu"
+          onClick={onOpenMenu}
+          title="Menu & Pengaturan"
+          aria-label="Buka Menu"
         >
           <svg
-            width="15"
-            height="15"
+            width="17"
+            height="17"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-          <span className="hide-on-mobile">Keluar</span>
+          {hasActiveFilters && (
+            <span className="header-menu-badge-dot" title="Filter aktif"></span>
+          )}
         </button>
       </div>
     </header>
   );
 };
+export default Header;

@@ -4,7 +4,9 @@ import { Header } from './components/Header';
 import { LocationForm } from './components/LocationForm';
 import { LocationList } from './components/LocationList';
 import { LoginModal } from './components/LoginModal';
+import { MapExportModal } from './components/MapExportModal';
 import { MapView } from './components/MapView';
+import { MenuDrawer } from './components/MenuDrawer';
 import { Toast, ToastMessage } from './components/Toast';
 import { useAuth } from './hooks/useAuth';
 import { useLocations } from './hooks/useLocations';
@@ -40,6 +42,11 @@ export const App: React.FC = () => {
   const [focusPosition, setFocusPosition] = useState<[number, number] | null>(null);
   const [searchResultPlace, setSearchResultPlace] = useState<GeocodingResult | null>(null);
   const [formInitialAddress, setFormInitialAddress] = useState<string>('');
+
+  // Menu & Export states
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState<boolean>(false);
+  const [isMapExportModalOpen, setIsMapExportModalOpen] = useState<boolean>(false);
+  const [showFilterBar, setShowFilterBar] = useState<boolean>(true);
 
   // Workflow states
   const [isAddingMode, setIsAddingMode] = useState<boolean>(false);
@@ -169,6 +176,53 @@ export const App: React.FC = () => {
     setFilters({ searchQuery: '', condition: 'Semua', wasteType: 'Semua' });
   };
 
+  // Export CSV Handler
+  const handleExportCSV = useCallback(() => {
+    if (allLocations.length === 0) {
+      addToast('info', 'Belum ada data lokasi untuk diekspor ke CSV.');
+      return;
+    }
+    const headers = [
+      'ID',
+      'Nama Inisiatif',
+      'Tempat Pengelolaan',
+      'Kondisi',
+      'Alamat Lengkap',
+      'Link Google Maps',
+      'Latitude',
+      'Longitude',
+      'Keterangan',
+      'Terakhir Diperbarui',
+    ];
+    const rows = allLocations.map((loc) => [
+      `"${loc.id}"`,
+      `"${(loc.label || 'Tanpa Nama').replace(/"/g, '""')}"`,
+      `"${(loc.waste_type || '').replace(/"/g, '""')}"`,
+      `"${loc.condition}"`,
+      `"${(loc.address || '').replace(/"/g, '""')}"`,
+      `"${loc.gmaps_url || `https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`}"`,
+      loc.latitude,
+      loc.longitude,
+      `"${(loc.description || '').replace(/"/g, '""')}"`,
+      `"${new Date(loc.updated_at || loc.created_at).toLocaleString('id-ID')}"`,
+    ]);
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,\uFEFF' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute(
+      'download',
+      `inisiatif_sampah_tamansari_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addToast('success', 'File CSV berhasil diunduh.');
+  }, [allLocations, addToast]);
+
   // Cancel adding
   const handleCancelAdd = () => {
     setIsAddingMode(false);
@@ -259,20 +313,25 @@ export const App: React.FC = () => {
         onAddClick={handleStartAdd}
         isAddingMode={isAddingMode}
         onCancelAdd={handleCancelAdd}
-        onLogout={logout}
+        onOpenMenu={() => setIsMenuDrawerOpen(true)}
         totalLocations={allLocations.length}
         activeView={activeView}
         onViewChange={setActiveView}
+        hasActiveFilters={Boolean(
+          filters.condition !== 'Semua' || filters.wasteType !== 'Semua'
+        )}
       />
 
-      <FilterControls
-        filters={filters}
-        onChange={setFilters}
-        stats={stats}
-        allLocations={allLocations}
-        onSelectPlace={handleSelectPlace}
-        onSelectLocation={handleSelectLocation}
-      />
+      {showFilterBar && (
+        <FilterControls
+          filters={filters}
+          onChange={setFilters}
+          stats={stats}
+          allLocations={allLocations}
+          onSelectPlace={handleSelectPlace}
+          onSelectLocation={handleSelectLocation}
+        />
+      )}
 
       {activeView === 'map' ? (
         <MapView
@@ -321,6 +380,28 @@ export const App: React.FC = () => {
           isLocating={isLocating}
         />
       )}
+
+      {/* Slide-in Menu & Settings Drawer */}
+      <MenuDrawer
+        isOpen={isMenuDrawerOpen}
+        onClose={() => setIsMenuDrawerOpen(false)}
+        filters={filters}
+        onFilterChange={setFilters}
+        stats={stats}
+        showFilterBar={showFilterBar}
+        onToggleFilterBar={setShowFilterBar}
+        onOpenMapExport={() => setIsMapExportModalOpen(true)}
+        onExportCSV={handleExportCSV}
+        onLogout={logout}
+      />
+
+      {/* Cartographic GIS Map Export Modal */}
+      <MapExportModal
+        isOpen={isMapExportModalOpen}
+        onClose={() => setIsMapExportModalOpen(false)}
+        locations={allLocations}
+        stats={stats}
+      />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />
     </>
