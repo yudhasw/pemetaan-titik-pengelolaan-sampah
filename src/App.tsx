@@ -330,6 +330,7 @@ export const App: React.FC = () => {
           allLocations={allLocations}
           onSelectPlace={handleSelectPlace}
           onSelectLocation={handleSelectLocation}
+          onClose={() => setShowFilterBar(false)}
         />
       ) : activeView === 'map' ? (
         <div className="floating-quick-search-wrapper">
