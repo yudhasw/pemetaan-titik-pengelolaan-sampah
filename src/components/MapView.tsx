@@ -19,6 +19,7 @@ interface MapViewProps {
   loading: boolean;
   isAddingMode: boolean;
   tempPosition: [number, number] | null;
+  focusPosition?: [number, number] | null;
   onMapClick: (lat: number, lng: number) => void;
   onTempMarkerDragEnd: (lat: number, lng: number) => void;
   onEditLocation: (location: TrashLocation) => void;
@@ -73,6 +74,7 @@ export const MapView: React.FC<MapViewProps> = ({
   loading,
   isAddingMode,
   tempPosition,
+  focusPosition,
   onMapClick,
   onTempMarkerDragEnd,
   onEditLocation,
@@ -94,7 +96,7 @@ export const MapView: React.FC<MapViewProps> = ({
   return (
     <div className="map-wrapper">
       <MapContainer
-        center={[DEFAULT_LAT, DEFAULT_LNG]}
+        center={focusPosition || [DEFAULT_LAT, DEFAULT_LNG]}
         zoom={DEFAULT_ZOOM}
         className="leaflet-map-container"
         zoomControl={false}
@@ -111,6 +113,7 @@ export const MapView: React.FC<MapViewProps> = ({
         />
 
         {tempPosition && <FlyToLocation position={tempPosition} />}
+        {focusPosition && !tempPosition && <FlyToLocation position={focusPosition} />}
 
         {/* Saved permanent location markers */}
         {locations.map((loc) => (

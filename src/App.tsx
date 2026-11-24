@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { FilterControls } from './components/FilterControls';
 import { Header } from './components/Header';
 import { LocationForm } from './components/LocationForm';
+import { LocationList } from './components/LocationList';
 import { LoginModal } from './components/LoginModal';
 import { MapView } from './components/MapView';
 import { Toast, ToastMessage } from './components/Toast';
@@ -17,6 +18,7 @@ import './styles/index.css';
 import './styles/components.css';
 import './styles/MapView.css';
 import './styles/LocationForm.css';
+import './styles/LocationList.css';
 
 export const App: React.FC = () => {
   const { isAuthenticated, loading: authLoading, login, logout } = useAuth();
@@ -31,6 +33,10 @@ export const App: React.FC = () => {
     editLocation,
     removeLocation,
   } = useLocations(isAuthenticated === true);
+
+  // Active view: 'map' | 'list'
+  const [activeView, setActiveView] = useState<'map' | 'list'>('map');
+  const [focusPosition, setFocusPosition] = useState<[number, number] | null>(null);
 
   // Workflow states
   const [isAddingMode, setIsAddingMode] = useState<boolean>(false);
@@ -116,10 +122,22 @@ export const App: React.FC = () => {
 
   // Start adding
   const handleStartAdd = () => {
+    setActiveView('map');
     setIsAddingMode(true);
     setEditingLocation(null);
     setIsFormOpen(false);
     addToast('info', 'Silakan klik pada peta di titik lokasi tempat sampah berada.');
+  };
+
+  // View on Map handler from List view
+  const handleViewOnMap = (loc: TrashLocation) => {
+    setFocusPosition([loc.latitude, loc.longitude]);
+    setActiveView('map');
+  };
+
+  // Reset filters handler
+  const handleResetFilters = () => {
+    setFilters({ searchQuery: '', condition: 'Semua', wasteType: 'Semua' });
   };
 
   // Cancel adding
@@ -214,6 +232,8 @@ export const App: React.FC = () => {
         onCancelAdd={handleCancelAdd}
         onLogout={logout}
         totalLocations={allLocations.length}
+        activeView={activeView}
+        onViewChange={setActiveView}
       />
 
       <FilterControls
@@ -222,18 +242,37 @@ export const App: React.FC = () => {
         stats={stats}
       />
 
-      <MapView
-        locations={locations}
-        loading={locationsLoading}
-        isAddingMode={isAddingMode}
-        tempPosition={tempPosition}
-        onMapClick={handleMapClick}
-        onTempMarkerDragEnd={handleTempMarkerDragEnd}
-        onEditLocation={handleStartEdit}
-        onDeleteLocation={handleDeleteLocation}
-        onUseCurrentLocation={handleUseCurrentLocation}
-        isLocating={isLocating}
-      />
+      {activeView === 'map' ? (
+        <MapView
+          locations={locations}
+          loading={locationsLoading}
+          isAddingMode={isAddingMode}
+          tempPosition={tempPosition}
+          focusPosition={focusPosition}
+          onMapClick={handleMapClick}
+          onTempMarkerDragEnd={handleTempMarkerDragEnd}
+          onEditLocation={handleStartEdit}
+          onDeleteLocation={handleDeleteLocation}
+          onUseCurrentLocation={handleUseCurrentLocation}
+          isLocating={isLocating}
+        />
+      ) : (
+        <LocationList
+          locations={locations}
+          totalAll={allLocations.length}
+          loading={locationsLoading}
+          onViewOnMap={handleViewOnMap}
+          onEdit={handleStartEdit}
+          onDelete={handleDeleteLocation}
+          onAddClick={handleStartAdd}
+          onResetFilters={handleResetFilters}
+          isFiltered={Boolean(
+            filters.searchQuery ||
+            filters.condition !== 'Semua' ||
+            filters.wasteType !== 'Semua'
+          )}
+        />
+      )}
 
       {isFormOpen && tempPosition && (
         <LocationForm

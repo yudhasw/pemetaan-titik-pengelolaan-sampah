@@ -6,6 +6,8 @@ interface HeaderProps {
   onCancelAdd: () => void;
   onLogout: () => void;
   totalLocations: number;
+  activeView: 'map' | 'list';
+  onViewChange: (view: 'map' | 'list') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -14,6 +16,8 @@ export const Header: React.FC<HeaderProps> = ({
   onCancelAdd,
   onLogout,
   totalLocations,
+  activeView,
+  onViewChange,
 }) => {
   return (
     <header className="app-header">
@@ -34,12 +38,46 @@ export const Header: React.FC<HeaderProps> = ({
           </svg>
         </div>
         <div className="brand-text">
-          <h1 className="brand-title">Pemetaan Pengelolaan Sampah</h1>
+          <h1 className="brand-title">Inisiatif Sampah</h1>
           <span className="brand-subtitle">Kel. Tamansari, Bandung Wetan</span>
         </div>
         <div className="brand-badge" title="Total inisiatif terdata">
           {totalLocations}
         </div>
+      </div>
+
+      {/* Segmented View Switcher: Peta vs Daftar */}
+      <div className="view-toggle-group">
+        <button
+          type="button"
+          className={`view-toggle-btn ${activeView === 'map' ? 'active' : ''}`}
+          onClick={() => onViewChange('map')}
+          title="Tampilan Peta Interaktif"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+          <span>Peta</span>
+        </button>
+
+        <button
+          type="button"
+          className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
+          onClick={() => onViewChange('list')}
+          title="Tampilan Daftar & Tabel Lokasi"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <span>Daftar</span>
+        </button>
       </div>
 
       <div className="header-actions">
