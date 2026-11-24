@@ -8,6 +8,7 @@ import { MapView } from './components/MapView';
 import { Toast, ToastMessage } from './components/Toast';
 import { useAuth } from './hooks/useAuth';
 import { useLocations } from './hooks/useLocations';
+import { GeocodingResult } from './services/geocoding';
 import {
   CreateLocationDto,
   TrashLocation,
@@ -37,6 +38,8 @@ export const App: React.FC = () => {
   // Active view: 'map' | 'list'
   const [activeView, setActiveView] = useState<'map' | 'list'>('map');
   const [focusPosition, setFocusPosition] = useState<[number, number] | null>(null);
+  const [searchResultPlace, setSearchResultPlace] = useState<GeocodingResult | null>(null);
+  const [formInitialAddress, setFormInitialAddress] = useState<string>('');
 
   // Workflow states
   const [isAddingMode, setIsAddingMode] = useState<boolean>(false);
@@ -125,8 +128,34 @@ export const App: React.FC = () => {
     setActiveView('map');
     setIsAddingMode(true);
     setEditingLocation(null);
+    setFormInitialAddress('');
     setIsFormOpen(false);
     addToast('info', 'Silakan klik pada peta di titik lokasi tempat sampah berada.');
+  };
+
+  // Google Maps place search selection handler
+  const handleSelectPlace = (place: GeocodingResult) => {
+    setSearchResultPlace(place);
+    setFocusPosition([place.lat, place.lng]);
+    setActiveView('map');
+    addToast('info', `Menemukan lokasi: ${place.name}`);
+  };
+
+  // Select registered waste initiative from search dropdown
+  const handleSelectLocation = (loc: TrashLocation) => {
+    setFocusPosition([loc.latitude, loc.longitude]);
+    setActiveView('map');
+    addToast('info', `Menuju inisiatif: ${loc.label || loc.waste_type}`);
+  };
+
+  // Add initiative directly at searched place coordinates
+  const handleAddAtPlace = (lat: number, lng: number, address: string) => {
+    setTempPosition([lat, lng]);
+    setFormInitialAddress(address);
+    setEditingLocation(null);
+    setIsAddingMode(false);
+    setIsFormOpen(true);
+    setSearchResultPlace(null);
   };
 
   // View on Map handler from List view
@@ -240,6 +269,9 @@ export const App: React.FC = () => {
         filters={filters}
         onChange={setFilters}
         stats={stats}
+        allLocations={allLocations}
+        onSelectPlace={handleSelectPlace}
+        onSelectLocation={handleSelectLocation}
       />
 
       {activeView === 'map' ? (
@@ -249,6 +281,9 @@ export const App: React.FC = () => {
           isAddingMode={isAddingMode}
           tempPosition={tempPosition}
           focusPosition={focusPosition}
+          searchResultPlace={searchResultPlace}
+          onClearSearchResult={() => setSearchResultPlace(null)}
+          onAddAtPlace={handleAddAtPlace}
           onMapClick={handleMapClick}
           onTempMarkerDragEnd={handleTempMarkerDragEnd}
           onEditLocation={handleStartEdit}
@@ -277,6 +312,7 @@ export const App: React.FC = () => {
       {isFormOpen && tempPosition && (
         <LocationForm
           initialData={editingLocation}
+          initialAddress={formInitialAddress}
           lat={tempPosition[0]}
           lng={tempPosition[1]}
           onSave={handleSaveForm}

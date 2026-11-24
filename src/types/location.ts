@@ -20,6 +20,8 @@ export interface TrashLocation {
   condition: TrashCondition;
   label?: string;
   description?: string;
+  address?: string;
+  gmaps_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +33,8 @@ export interface CreateLocationDto {
   condition: TrashCondition;
   label?: string;
   description?: string;
+  address?: string;
+  gmaps_url?: string;
 }
 
 export interface UpdateLocationDto {
@@ -41,6 +45,8 @@ export interface UpdateLocationDto {
   condition?: TrashCondition;
   label?: string;
   description?: string;
+  address?: string;
+  gmaps_url?: string;
 }
 
 export interface FilterState {

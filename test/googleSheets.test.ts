@@ -119,7 +119,7 @@ describe('Google Sheets Logic Unit Tests (with Mocks)', () => {
 
       const appendCall = appendMock.mock.calls[0][0];
       expect(appendCall.valueInputOption).toBe('RAW');
-      expect(appendCall.range).toBe("'trash_locations'!A:J");
+      expect(appendCall.range).toBe("'trash_locations'!A:L");
 
       const writtenRow = appendCall.requestBody.values[0];
       expect(writtenRow[0]).toBe(newLoc.id);
@@ -129,6 +129,7 @@ describe('Google Sheets Logic Unit Tests (with Mocks)', () => {
       expect(writtenRow[4]).toBe('Baik');
       expect(writtenRow[5]).toBe('TPS Merdeka');
       expect(writtenRow[9]).toBe(''); // deleted_at is empty
+      expect(writtenRow[11]).toBe('https://www.google.com/maps?q=-6.2,106.8');
     });
   });
 
@@ -168,7 +169,7 @@ describe('Google Sheets Logic Unit Tests (with Mocks)', () => {
       expect(updateMock).toHaveBeenCalledTimes(1);
       const updateCall = updateMock.mock.calls[0][0];
       // Row 1 is header, id-101 is index 0 -> row 2
-      expect(updateCall.range).toBe("'trash_locations'!B2:I2");
+      expect(updateCall.range).toBe("'trash_locations'!B2:L2");
       expect(updateCall.valueInputOption).toBe('RAW');
     });
 

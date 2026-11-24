@@ -3,10 +3,12 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import {
   MapContainer,
   Marker,
+  Popup,
   TileLayer,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
+import { GeocodingResult } from '../services/geocoding';
 import { TrashLocation } from '../types/location';
 import { createTrashPinIcon, LocationMarker } from './LocationMarker';
 import { MapLegend } from './MapLegend';
@@ -20,6 +22,9 @@ interface MapViewProps {
   isAddingMode: boolean;
   tempPosition: [number, number] | null;
   focusPosition?: [number, number] | null;
+  searchResultPlace?: GeocodingResult | null;
+  onClearSearchResult?: () => void;
+  onAddAtPlace?: (lat: number, lng: number, address: string) => void;
   onMapClick: (lat: number, lng: number) => void;
   onTempMarkerDragEnd: (lat: number, lng: number) => void;
   onEditLocation: (location: TrashLocation) => void;
@@ -69,12 +74,37 @@ function FlyToLocation({ position }: { position: [number, number] | null }) {
   return null;
 }
 
+function createSearchPinIcon(): L.DivIcon {
+  const html = `
+    <div class="custom-trash-pin pin-search-result" style="--pin-color: #2563eb; --pin-border: #1e40af;">
+      <div class="pin-radar"></div>
+      <div class="pin-head">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <div class="pin-point"></div>
+    </div>
+  `;
+  return L.divIcon({
+    className: 'custom-pin-container',
+    html,
+    iconSize: [32, 42],
+    iconAnchor: [16, 42],
+    popupAnchor: [0, -38],
+  });
+}
+
 export const MapView: React.FC<MapViewProps> = ({
   locations,
   loading,
   isAddingMode,
   tempPosition,
   focusPosition,
+  searchResultPlace,
+  onClearSearchResult,
+  onAddAtPlace,
   onMapClick,
   onTempMarkerDragEnd,
   onEditLocation,
@@ -83,6 +113,7 @@ export const MapView: React.FC<MapViewProps> = ({
   isLocating,
 }) => {
   const tempMarkerIcon = useMemo(() => createTrashPinIcon('temporary'), []);
+  const searchPinIcon = useMemo(() => createSearchPinIcon(), []);
   const tempMarkerRef = useRef<L.Marker | null>(null);
 
   const handleDragEnd = () => {
@@ -114,6 +145,53 @@ export const MapView: React.FC<MapViewProps> = ({
 
         {tempPosition && <FlyToLocation position={tempPosition} />}
         {focusPosition && !tempPosition && <FlyToLocation position={focusPosition} />}
+        {searchResultPlace && !tempPosition && !focusPosition && (
+          <FlyToLocation position={[searchResultPlace.lat, searchResultPlace.lng]} />
+        )}
+
+        {/* Search Result Marker (Google Maps place search) */}
+        {searchResultPlace && (
+          <Marker
+            position={[searchResultPlace.lat, searchResultPlace.lng]}
+            icon={searchPinIcon}
+          >
+            <Popup className="search-result-popup" autoPan={true}>
+              <div className="search-popup-content">
+                <div className="search-popup-badge">📍 Tempat Dicari</div>
+                <h4 className="search-popup-title">{searchResultPlace.name}</h4>
+                <p className="search-popup-address">
+                  {searchResultPlace.address_detail || searchResultPlace.display_name}
+                </p>
+                <div className="search-popup-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm btn-add-here"
+                    onClick={() => {
+                      if (onAddAtPlace) {
+                        onAddAtPlace(
+                          searchResultPlace.lat,
+                          searchResultPlace.lng,
+                          searchResultPlace.address_detail || searchResultPlace.display_name
+                        );
+                      }
+                    }}
+                  >
+                    ➕ Tambah Tempat Sampah di Sini
+                  </button>
+                  {onClearSearchResult && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={onClearSearchResult}
+                    >
+                      Tutup
+                    </button>
+                  )}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
         {/* Saved permanent location markers */}
         {locations.map((loc) => (

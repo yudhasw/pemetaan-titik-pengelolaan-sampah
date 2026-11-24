@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { reverseGeocode } from '../services/geocoding';
 import {
   CreateLocationDto,
   TrashCondition,
@@ -9,6 +10,7 @@ import {
 
 interface LocationFormProps {
   initialData?: TrashLocation | null;
+  initialAddress?: string;
   lat: number;
   lng: number;
   onSave: (data: CreateLocationDto | UpdateLocationDto) => Promise<void>;
@@ -28,6 +30,7 @@ const PRESET_OPTIONS: WasteType[] = [
 
 export const LocationForm: React.FC<LocationFormProps> = ({
   initialData,
+  initialAddress,
   lat,
   lng,
   onSave,
@@ -55,9 +58,28 @@ export const LocationForm: React.FC<LocationFormProps> = ({
   const [description, setDescription] = useState(
     initialData?.description || ''
   );
+  const [address, setAddress] = useState<string>(
+    initialData?.address || initialAddress || ''
+  );
+  const [isGeocoding, setIsGeocoding] = useState<boolean>(false);
 
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const gmapsUrl = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+
+  const handleAutoFetchAddress = async () => {
+    if (isNaN(lat) || isNaN(lng)) return;
+    setIsGeocoding(true);
+    try {
+      const detected = await reverseGeocode(lat, lng);
+      if (detected) {
+        setAddress(detected);
+      }
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -76,8 +98,13 @@ export const LocationForm: React.FC<LocationFormProps> = ({
       setCondition(initialData.condition);
       setLabel(initialData.label || '');
       setDescription(initialData.description || '');
+      setAddress(initialData.address || '');
+    } else if (initialAddress) {
+      setAddress(initialAddress);
+    } else if (lat && lng && !address) {
+      handleAutoFetchAddress();
     }
-  }, [initialData]);
+  }, [initialData, lat, lng]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +142,8 @@ export const LocationForm: React.FC<LocationFormProps> = ({
           condition,
           label: label.trim() || undefined,
           description: description.trim() || undefined,
+          address: address.trim() || undefined,
+          gmaps_url: gmapsUrl,
         });
       } else {
         await onSave({
@@ -124,6 +153,8 @@ export const LocationForm: React.FC<LocationFormProps> = ({
           condition,
           label: label.trim() || undefined,
           description: description.trim() || undefined,
+          address: address.trim() || undefined,
+          gmaps_url: gmapsUrl,
         });
       }
     } catch (err: any) {
@@ -354,6 +385,69 @@ export const LocationForm: React.FC<LocationFormProps> = ({
               disabled={saving}
             />
             <span className="form-help">Maksimal 500 karakter.</span>
+          </div>
+
+          {/* Alamat Lengkap / Patokan */}
+          <div className="form-group">
+            <div className="form-label-row">
+              <label className="form-label" htmlFor="location-address">
+                Alamat Lengkap / Patokan (Opsional)
+              </label>
+              <button
+                type="button"
+                className="btn-fetch-address"
+                onClick={handleAutoFetchAddress}
+                disabled={saving || isGeocoding}
+                title="Deteksi alamat otomatis via OpenStreetMap"
+              >
+                {isGeocoding ? (
+                  <>
+                    <span className="spinner-border spinner-xs"></span>
+                    <span>Mendeteksi...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Deteksi Alamat Otomatis</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <textarea
+              id="location-address"
+              className="form-control"
+              placeholder="Contoh: Jl. Pelesiran Gang V No. 12, RT 03/RW 05, Kel. Tamansari, Bandung"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              rows={2}
+              maxLength={500}
+              disabled={saving}
+            />
+            <span className="form-help">
+              Alamat akan otomatis disimpan ke Google Sheets & dapat diekspor ke file CSV.
+            </span>
+          </div>
+
+          {/* Link Google Maps Otomatis */}
+          <div className="form-group gmaps-preview-card">
+            <span className="gmaps-preview-label">Link Google Maps (Otomatis dibuat):</span>
+            <a
+              href={gmapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gmaps-preview-link"
+              title="Buka titik koordinat ini di Google Maps"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              <span>{gmapsUrl}</span>
+            </a>
           </div>
 
           <div className="form-sheet-actions">

@@ -100,6 +100,8 @@ export function validateCreateLocation(payload: unknown): ValidationResult<Creat
 
   const label = sanitizeText(p.label, 100);
   const description = sanitizeText(p.description, 500);
+  const address = sanitizeText(p.address, 500);
+  const gmaps_url = sanitizeText(p.gmaps_url, 500);
 
   if (Object.keys(errors).length > 0) {
     return { valid: false, errors };
@@ -115,6 +117,8 @@ export function validateCreateLocation(payload: unknown): ValidationResult<Creat
       condition: condResult.value!,
       label,
       description,
+      address,
+      gmaps_url,
     },
   };
 }
@@ -179,6 +183,14 @@ export function validateUpdateLocation(payload: unknown): ValidationResult<Updat
 
   if ('description' in p) {
     updateData.description = sanitizeText(p.description, 500) || '';
+  }
+
+  if ('address' in p) {
+    updateData.address = sanitizeText(p.address, 500) || '';
+  }
+
+  if ('gmaps_url' in p) {
+    updateData.gmaps_url = sanitizeText(p.gmaps_url, 500) || '';
   }
 
   if (Object.keys(errors).length > 0) {

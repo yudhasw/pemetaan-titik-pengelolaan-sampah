@@ -13,6 +13,8 @@ export const SHEET_COLUMNS = [
   'created_at',
   'updated_at',
   'deleted_at',
+  'address',
+  'gmaps_url',
 ] as const;
 
 export interface GoogleSheetsConfig {
@@ -131,14 +133,14 @@ export async function ensureSheetAndHeaders(
 
     const headerRes = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `'${sheetName}'!A1:J1`,
+      range: `'${sheetName}'!A1:L1`,
     });
 
     const headers = headerRes.data?.values?.[0];
-    if (!headers || headers.length === 0 || !headers[0]) {
+    if (!headers || headers.length < 12 || !headers[0]) {
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `'${sheetName}'!A1:J1`,
+        range: `'${sheetName}'!A1:L1`,
         valueInputOption: 'RAW',
         requestBody: {
           values: [Array.from(SHEET_COLUMNS)],
@@ -158,11 +160,19 @@ export function rowToTrashLocation(row: any[]): TrashLocation | null {
 
   const latNum = Number(row[1]);
   const lngNum = Number(row[2]);
+  const lat = isNaN(latNum) ? 0 : latNum;
+  const lng = isNaN(lngNum) ? 0 : lngNum;
+
+  // Auto-generate Google Maps URL if not stored in column 11
+  const gmapsUrl =
+    row[11] && String(row[11]).trim() !== ''
+      ? String(row[11]).trim()
+      : `https://www.google.com/maps?q=${lat},${lng}`;
 
   return {
     id,
-    latitude: isNaN(latNum) ? 0 : latNum,
-    longitude: isNaN(lngNum) ? 0 : lngNum,
+    latitude: lat,
+    longitude: lng,
     waste_type: (row[3] || 'Budidaya Maggot') as any,
     condition: (row[4] || 'Baik') as any,
     label: row[5] ? String(row[5]) : undefined,
@@ -170,6 +180,8 @@ export function rowToTrashLocation(row: any[]): TrashLocation | null {
     created_at: String(row[7] || ''),
     updated_at: String(row[8] || ''),
     deleted_at: row[9] ? String(row[9]) : undefined,
+    address: row[10] ? String(row[10]) : undefined,
+    gmaps_url: gmapsUrl,
   };
 }
 
@@ -184,7 +196,7 @@ export async function getAllLocations(
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: config.spreadsheetId,
-      range: `'${config.sheetName}'!A2:J`,
+      range: `'${config.sheetName}'!A2:L`,
     });
     rows = response.data.values || [];
   } catch (err: any) {
@@ -193,7 +205,7 @@ export async function getAllLocations(
       try {
         const retryRes = await sheets.spreadsheets.values.get({
           spreadsheetId: config.spreadsheetId,
-          range: `'${config.sheetName}'!A2:J`,
+          range: `'${config.sheetName}'!A2:L`,
         });
         rows = retryRes.data.values || [];
       } catch {
@@ -229,6 +241,9 @@ export async function createLocation(
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
+  const address = dto.address || '';
+  const gmapsUrl =
+    dto.gmaps_url || `https://www.google.com/maps?q=${dto.latitude},${dto.longitude}`;
 
   const newRow = [
     id,
@@ -241,12 +256,14 @@ export async function createLocation(
     now,
     now,
     '',
+    address,
+    gmapsUrl,
   ];
 
   try {
     await sheets.spreadsheets.values.append({
       spreadsheetId: config.spreadsheetId,
-      range: `'${config.sheetName}'!A:J`,
+      range: `'${config.sheetName}'!A:L`,
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       requestBody: {
@@ -258,7 +275,7 @@ export async function createLocation(
       await ensureSheetAndHeaders(sheets, config.spreadsheetId, config.sheetName);
       await sheets.spreadsheets.values.append({
         spreadsheetId: config.spreadsheetId,
-        range: `'${config.sheetName}'!A:J`,
+        range: `'${config.sheetName}'!A:L`,
         valueInputOption: 'RAW',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
@@ -278,6 +295,8 @@ export async function createLocation(
     condition: dto.condition,
     label: dto.label || undefined,
     description: dto.description || undefined,
+    address: address || undefined,
+    gmaps_url: gmapsUrl,
     created_at: now,
     updated_at: now,
   };
@@ -293,7 +312,7 @@ export async function updateLocation(
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: config.spreadsheetId,
-    range: `'${config.sheetName}'!A2:J`,
+    range: `'${config.sheetName}'!A2:L`,
   });
 
   const rows = response.data.values || [];
@@ -329,6 +348,11 @@ export async function updateLocation(
   const updatedCondition = dto.condition || existingLoc.condition;
   const updatedLabel = dto.label !== undefined ? dto.label : (existingLoc.label || '');
   const updatedDescription = dto.description !== undefined ? dto.description : (existingLoc.description || '');
+  const updatedAddress = dto.address !== undefined ? dto.address : (existingLoc.address || '');
+  const updatedGmapsUrl =
+    dto.gmaps_url !== undefined
+      ? dto.gmaps_url
+      : (existingLoc.gmaps_url || `https://www.google.com/maps?q=${updatedLat},${updatedLng}`);
 
   const updatedValues = [
     updatedLat.toString(),
@@ -339,11 +363,14 @@ export async function updateLocation(
     updatedDescription,
     existingLoc.created_at,
     now,
+    existingRow[9] || '',
+    updatedAddress,
+    updatedGmapsUrl,
   ];
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: config.spreadsheetId,
-    range: `'${config.sheetName}'!B${targetRowIndex}:I${targetRowIndex}`,
+    range: `'${config.sheetName}'!B${targetRowIndex}:L${targetRowIndex}`,
     valueInputOption: 'RAW',
     requestBody: {
       values: [updatedValues],
@@ -358,6 +385,8 @@ export async function updateLocation(
     condition: updatedCondition,
     label: updatedLabel || undefined,
     description: updatedDescription || undefined,
+    address: updatedAddress || undefined,
+    gmaps_url: updatedGmapsUrl,
     created_at: existingLoc.created_at,
     updated_at: now,
   };
@@ -377,7 +406,7 @@ export async function softDeleteLocation(
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: config.spreadsheetId,
-    range: `'${config.sheetName}'!A2:J`,
+    range: `'${config.sheetName}'!A2:L`,
   });
 
   const rows = response.data.values || [];

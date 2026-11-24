@@ -69,7 +69,14 @@ export function useLocations(enabled: boolean = true) {
         const query = filters.searchQuery.toLowerCase();
         const label = (loc.label || '').toLowerCase();
         const desc = (loc.description || '').toLowerCase();
-        if (!label.includes(query) && !desc.includes(query)) {
+        const address = (loc.address || '').toLowerCase();
+        const wasteType = (loc.waste_type || '').toLowerCase();
+        if (
+          !label.includes(query) &&
+          !desc.includes(query) &&
+          !address.includes(query) &&
+          !wasteType.includes(query)
+        ) {
           return false;
         }
       }
