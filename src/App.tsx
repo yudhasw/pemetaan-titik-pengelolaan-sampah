@@ -46,7 +46,7 @@ export const App: React.FC = () => {
   // Menu & Export states
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState<boolean>(false);
   const [isMapExportModalOpen, setIsMapExportModalOpen] = useState<boolean>(false);
-  const [showFilterBar, setShowFilterBar] = useState<boolean>(true);
+  const [showFilterBar, setShowFilterBar] = useState<boolean>(false);
 
   // Workflow states
   const [isAddingMode, setIsAddingMode] = useState<boolean>(false);
@@ -322,7 +322,7 @@ export const App: React.FC = () => {
         )}
       />
 
-      {showFilterBar && (
+      {showFilterBar ? (
         <FilterControls
           filters={filters}
           onChange={setFilters}
@@ -331,7 +331,22 @@ export const App: React.FC = () => {
           onSelectPlace={handleSelectPlace}
           onSelectLocation={handleSelectLocation}
         />
-      )}
+      ) : activeView === 'map' ? (
+        <div className="floating-quick-search-wrapper">
+          <button
+            type="button"
+            className="btn-floating-quick-search"
+            onClick={() => setShowFilterBar(true)}
+            title="Buka pencarian lokasi dan filter"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Cari lokasi / aktifkan filter...</span>
+          </button>
+        </div>
+      ) : null}
 
       {activeView === 'map' ? (
         <MapView

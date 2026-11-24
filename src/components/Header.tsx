@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
           </svg>
         </div>
         <div className="brand-text">
-          <h1 className="brand-title">Inisiatif Sampah</h1>
+          <h1 className="brand-title">Pemetaan</h1>
           <span className="brand-subtitle hide-on-mobile">Kel. Tamansari, Bandung Wetan</span>
         </div>
         <div className="brand-badge hide-on-mobile" title="Total inisiatif terdata">
